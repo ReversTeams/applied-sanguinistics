@@ -1,15 +1,16 @@
-package net.reversteam.mixin_mod_template;
+package net.reversteam.appliedsanguinistics;
 
-import net.minecraftforge.fml.common.Mod;
-import net.minecraftforge.fml.javafmlmod.FMLJavaModLoadingContext;
+import net.fabricmc.api.ModInitializer;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
-// The value here should match an entry in the META-INF/mods.toml file
-@Mod(AppliedSanguinistics.MODID)
-public class AppliedSanguinistics {
-    // Define mod id in a common place for everything to reference
-    public static final String MODID = "applied_sanguinistics";
+public class AppliedSanguinistics implements ModInitializer {
+    public static final String MOD_ID = "applied_sanguinistics";
+    public static final Logger LOGGER = LoggerFactory.getLogger(MOD_ID);
 
-    public MixinModTemplate(FMLJavaModLoadingContext context) {
-
+    @Override
+    public void onInitialize() {
+        // Your code runs as soon as Minecraft is ready to load mods
+        LOGGER.info("Hello Fabric world from Common Initialization!");
     }
 }
