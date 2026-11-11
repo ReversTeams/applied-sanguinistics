@@ -1,48 +1,81 @@
 plugins {
-    id "eclipse"
-    id "idea"
-    id "maven-publish"
-    id "fabric-loom" version "1.8.+"
+    id "net.fabricmc.fabric-loom-remap" version "${loom_version}"
+	id "maven-publish"
 }
-
-base {
-    archivesName = "${mod_id}-${mod_version}"
-}
-
-java.toolchain.languageVersion = JavaLanguageVersion.of(java_version_number.toInteger())
 
 println "Java: ${System.getProperty "java.version"}, JVM: ${System.getProperty "java.vm.version"} (${System.getProperty "java.vendor"}), Arch: ${System.getProperty "os.arch"}"
 
 repositories {
-    mavenCentral()
-
     maven {
-        name = "Modrinth"
-        url = "https://api.modrinth.com/maven"
+        name = "Mojang"
+        url = "https://libraries.minecraft.net/"
         content {
+            includeGroup "net.minecraft"
+            includeGroupAndSubgroups "com.mojang"
+        }
+    }
+
+    exclusiveContent {
+        forRepository {
+            maven {
+                name = "Modrinth"
+                url = "https://api.modrinth.com/maven/"
+            }
+        }
+        filter {
             includeGroup "maven.modrinth"
         }
     }
 
-    maven {
-        name = "Terraformers"
-        url = "https://maven.terraformersmc.com/releases/"
+    exclusiveContent {
+        forRepository {
+            maven {
+                name = "Terraformers"
+                url = "https://maven.terraformersmc.com/releases/"
+            }
+        }
+        filter {
+            includeGroup "com.terraformersmc"
+        }
     }
 
-    maven {
-        url = "https://cursemaven.com"
-        content {
+
+
+    exclusiveContent {
+        forRepository {
+            maven {
+                name = "Sleeping Town"
+                url = "https://repo.sleeping.town/"
+            }
+        }
+        filter {
+            includeGroup "dev.emi"
+        }
+    }
+
+    exclusiveContent {
+        forRepository {
+            maven {
+                name = "CurseMaven"
+                url = "https://cursemaven.com"
+            }
+        }
+        filter {
             includeGroup "curse.maven"
         }
     }
+
+    mavenCentral()
 }
 
 dependencies {
+
     // Fabric Loader and API
-    minecraft "com.mojang:minecraft:${minecraft_version}"
-    mappings "net.fabricmc:yarn:${yarn_mappings}:v2"
-    modImplementation "net.fabricmc:fabric-loader:${loader_version}"
-    modImplementation "net.fabricmc.fabric-api:fabric-api:${fabric_version}"
+	minecraft "com.mojang:minecraft:${project.minecraft_version}"
+	mappings "net.fabricmc:yarn:${project.yarn_mappings}:v2"
+	modImplementation "net.fabricmc:fabric-loader:${project.loader_version}"
+
+    modImplementation "com.terraformersmc:modmenu:${project.modmenu_version}"
 
     // EMI
     // Compile against the EMI API
@@ -52,7 +85,7 @@ dependencies {
 
     // AE2 fabric
     // Compatible with Forge AE2 when the mod is loaded through Sinytra Connector
-    modImplementation "maven.modrinth:XxWD5pD3:${ae2_version}"
+    modImplementation "maven.modrinth:ae2:${ae2_version}"
 
     // NEEPMeat
     modImplementation "maven.modrinth:neepmeat:${neepmeat_version}"
@@ -74,38 +107,42 @@ processResources {
     }
 }
 
-// Mixin configuration
-loom {
-    mixin {
-        defaultRefmapName = "${mod_id}.refmap.json"
-    }
-}
-
 tasks.withType(JavaCompile).configureEach {
-    options.encoding = "UTF-8"
     options.release = java_version_number.toInteger()
 }
 
 java {
-    withSourcesJar()
+	// Loom will automatically attach sourcesJar to a RemapSourcesJar task and to the "build" task
+	// if it is present.
+	// If you remove this line, sources will not be generated.
+	withSourcesJar()
+
+	sourceCompatibility = JavaLanguageVersion.of(java_version_number.toInteger())
+	targetCompatibility = JavaLanguageVersion.of(java_version_number.toInteger())
 }
 
 jar {
-    from("LICENSE") {
-        rename { "${it}_${mod_id}" }
-    }
+	def projectName = project.name
+	inputs.property "projectName", projectName
 
-    // parity with forge, might remove later
-    manifest {
-        attributes([
-                "Specification-Title"     : mod_id,
-                "Specification-Vendor"    : mod_author,
-                "Specification-Version"   : "1",
-                "Implementation-Title"    : project.name,
-                "Implementation-Version"  : project.version,
-                "Implementation-Vendor"   : mod_author,
-                "Implementation-Timestamp": new Date().format("yyyy-MM-dd'T'HH:mm:ssZ"),
-                "MixinConfigs"            : "${mod_id}.mixins.json"
-        ])
-    }
+	from("LICENSE") {
+		rename { "${it}_$projectName"}
+	}
+}
+
+// configure the maven publication
+publishing {
+	publications {
+		create("mavenJava", MavenPublication) {
+			from components.java
+		}
+	}
+
+	// See https://docs.gradle.org/current/userguide/publishing_maven.html for information on how to set up publishing.
+	repositories {
+		// Add repositories to publish to here.
+		// Notice: This block does NOT have the same function as the block in the top level.
+		// The repositories here will be used for publishing your artifact, not for
+		// retrieving dependencies.
+	}
 }

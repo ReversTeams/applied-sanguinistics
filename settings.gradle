@@ -1,11 +1,22 @@
 pluginManagement {
-    repositories {
-        gradlePluginPortal()
-        maven { url = "https://maven.minecraftforge.net/" }
-        maven { url = "https://repo.spongepowered.org/repository/maven-public/" }
+	repositories {
+		maven {
+			name = "Fabric"
+			url = "https://maven.fabricmc.net/"
+		}
+		mavenCentral()
+		gradlePluginPortal()
+	}
+}
+
+def localPropertiesFile = new File(rootDir, "local.gradle.properties")
+if (localPropertiesFile.exists()) {
+    def localProperties = new Properties()
+    localPropertiesFile.withInputStream { localProperties.load(it) }
+    localProperties.each { key, value ->
+        ext.set(key, value)
     }
 }
 
-plugins {
-    id "org.gradle.toolchains.foojay-resolver-convention" version "0.7.0"
-}
+// Should match your modid
+rootProject.name = "applied-sanguinistics"
