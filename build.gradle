@@ -1,5 +1,5 @@
 plugins {
-    id "net.fabricmc.fabric-loom-remap" version "${loom_version}"
+    id "fabric-loom" version "${loom_version}"
 	id "maven-publish"
 }
 
@@ -39,8 +39,6 @@ repositories {
         }
     }
 
-
-
     exclusiveContent {
         forRepository {
             maven {
@@ -50,6 +48,15 @@ repositories {
         }
         filter {
             includeGroup "dev.emi"
+        }
+    }
+
+    maven {
+        name = "GeckoLib"
+        url = "https://dl.cloudsmith.io/public/geckolib3/geckolib/maven/"
+        content {
+            includeGroupByRegex "software\\.bernie.*"
+            includeGroup "com.eliotlash.mclib"
         }
     }
 
@@ -68,14 +75,20 @@ repositories {
     mavenCentral()
 }
 
+configurations { nestedMod }
+
 dependencies {
 
     // Fabric Loader and API
-	minecraft "com.mojang:minecraft:${project.minecraft_version}"
-	mappings "net.fabricmc:yarn:${project.yarn_mappings}:v2"
-	modImplementation "net.fabricmc:fabric-loader:${project.loader_version}"
+	minecraft "com.mojang:minecraft:${minecraft_version}"
+	mappings "net.fabricmc:yarn:${yarn_mappings}:v2"
+	modImplementation "net.fabricmc:fabric-loader:${loader_version}"
+    modImplementation "net.fabricmc.fabric-api:fabric-api:${fabric_api_version}"
 
-    modImplementation "com.terraformersmc:modmenu:${project.modmenu_version}"
+    modImplementation "com.terraformersmc:modmenu:${modmenu_version}"
+
+    // GeckoLib
+    modImplementation "software.bernie.geckolib:geckolib-fabric-${minecraft_version}:${geckolib_version}"
 
     // EMI
     // Compile against the EMI API
@@ -89,6 +102,31 @@ dependencies {
 
     // NEEPMeat
     modImplementation "maven.modrinth:neepmeat:${neepmeat_version}"
+    nestedMod "maven.modrinth:neepmeat:${neepmeat_version}"
+
+    // direct jars
+    implementation fileTree(dir: "libs", include: ["*.jar"])
+}
+
+// jinj
+afterEvaluate {
+    def extractedJarsDir = layout.buildDirectory.dir("extracted-jinj").get().asFile
+    extractedJarsDir.mkdirs()
+
+    configurations.nestedMod.resolve().each { jarFile ->
+        copy {
+            from(zipTree(jarFile)) {
+                include "META-INF/jars/*.jar"
+                eachFile { it.path = it.name }
+                includeEmptyDirs = false
+            }
+            into extractedJarsDir
+        }
+    }
+
+    fileTree(dir: extractedJarsDir, include: ["*.jar"]).each { nestedJar ->
+        dependencies.add("modImplementation", files(nestedJar))
+    }
 }
 
 processResources {
@@ -105,7 +143,21 @@ processResources {
     ]) {
         expand props
     }
+
+    exclude "**/*.kra"
 }
+
+loom {
+    runs {
+        client {
+            vmArg "-Dmixin.debug.verify=false"
+        }
+        server {
+            vmArg "-Dmixin.debug.verify=false"
+        }
+    }
+}
+
 
 tasks.withType(JavaCompile).configureEach {
     options.release = java_version_number.toInteger()
