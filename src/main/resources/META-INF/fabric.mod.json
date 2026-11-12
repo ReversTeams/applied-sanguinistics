@@ -16,19 +16,19 @@
   "environment": "*",
   "entrypoints": {
     "main": [
-      "com.reversteam.appliedsanguinistics.AppliedSanguinistics"
+      "${group}.AppliedSanguinistics"
     ],
     "client": [
-      "com.reversteam.appliedsanguinistics.client.AppliedSanguinisticsClient"
+      "${group}.client.AppliedSanguinisticsClient"
     ]
   },
   "mixins": [
     "${mod_id}.mixins.json"
   ],
   "depends": {
-    "fabricloader": ">=0.15.0",
-    "minecraft": "~1.20.1",
-    "java": ">=17",
+    "fabricloader": ">=${loader_version}",
+    "minecraft": "~${minecraft_version}",
+    "java": ">=${java_version_number}",
     "fabric-api": "*",
     "ae2": "*",
     "neepmeat": "*"
