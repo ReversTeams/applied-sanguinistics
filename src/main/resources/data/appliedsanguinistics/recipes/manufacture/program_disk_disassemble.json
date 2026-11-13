@@ -1,0 +1,20 @@
+{
+  "type": "neepmeat:manufacture",
+  "base": {
+    "id": "ae2:item_cell_housing"
+  },
+  "steps":[
+    {
+      "id": "neepmeat:combine",
+      "resource": "ae2:printed_silicon"
+    },
+    {
+      "id": "neepmeat:inject",
+      "resource": "neepmeat:work_fluid"
+    }
+  ],
+  "result": {
+    "resource": "neepmeat:program_card",
+    "amount": 1
+  }
+}

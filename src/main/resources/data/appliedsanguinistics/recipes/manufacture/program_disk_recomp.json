@@ -1,0 +1,16 @@
+{
+  "type": "neepmeat:manufacture",
+  "base": {
+    "id": "neepmeat:program_card"
+  },
+  "steps":[
+    {
+      "id": "neepmeat:inject",
+      "resource": "neepmeat:work_fluid"
+    }
+  ],
+  "result": {
+    "resource": "neepmeat:charnel_pump",
+    "amount": 1
+  }
+}
