@@ -6,15 +6,6 @@ plugins {
 println "Java: ${System.getProperty "java.version"}, JVM: ${System.getProperty "java.vm.version"} (${System.getProperty "java.vendor"}), Arch: ${System.getProperty "os.arch"}"
 
 repositories {
-    maven {
-        name = "Mojang"
-        url = "https://libraries.minecraft.net/"
-        content {
-            includeGroup "net.minecraft"
-            includeGroupAndSubgroups "com.mojang"
-        }
-    }
-
     exclusiveContent {
         forRepository {
             maven {
@@ -51,10 +42,14 @@ repositories {
         }
     }
 
-    maven {
-        name = "GeckoLib"
-        url = "https://dl.cloudsmith.io/public/geckolib3/geckolib/maven/"
-        content {
+    exclusiveContent {
+        forRepository {
+            maven {
+                name = "GeckoLib"
+                url = "https://dl.cloudsmith.io/public/geckolib3/geckolib/maven/"
+            }
+        }
+        filter {
             includeGroupByRegex "software\\.bernie.*"
             includeGroup "com.eliotlash.mclib"
         }
@@ -72,7 +67,21 @@ repositories {
         }
     }
 
+    flatDir {
+        name = "ExtractedJars"
+        dirs layout.buildDirectory.dir("extracted-jinj")
+    }
+
     mavenCentral()
+
+    maven {
+        name = "Mojang"
+        url = "https://libraries.minecraft.net/"
+        content {
+            includeGroup "net.minecraft"
+            includeGroupAndSubgroups "com.mojang"
+        }
+    }
 }
 
 configurations { nestedMod }
@@ -99,6 +108,7 @@ dependencies {
     // AE2 fabric
     // Compatible with Forge AE2 when the mod is loaded through Sinytra Connector
     modImplementation "maven.modrinth:ae2:${ae2_version}"
+    nestedMod "maven.modrinth:ae2:${ae2_version}"
 
     // NEEPMeat
     modImplementation "maven.modrinth:neepmeat:${neepmeat_version}"
@@ -106,28 +116,37 @@ dependencies {
 
     // direct jars
     implementation fileTree(dir: "libs", include: ["*.jar"])
+    modLocalRuntime fileTree(dir: layout.buildDirectory.dir("extracted-jinj"), include: ["*.jar"])
 }
 
 // jinj
-afterEvaluate {
-    def extractedJarsDir = layout.buildDirectory.dir("extracted-jinj").get().asFile
+def extractedJarsDir = layout.buildDirectory.dir("extracted-jinj").get().asFile
+configurations.modLocalRuntime.incoming.beforeResolve {
+    if (extractedJarsDir.exists()) {
+        extractedJarsDir.deleteDir()
+    }
     extractedJarsDir.mkdirs()
 
-    configurations.nestedMod.resolve().each { jarFile ->
-        copy {
-            from(zipTree(jarFile)) {
-                include "META-INF/jars/*.jar"
-                eachFile { it.path = it.name }
-                includeEmptyDirs = false
-            }
-            into extractedJarsDir
+    def seen = new HashSet<String>()
+    def extractNested
+    extractNested = { File jarFile ->
+        if (!jarFile.exists() || !seen.add(jarFile.canonicalPath)) {
+            return
+        }
+        zipTree(jarFile).matching {
+            include "META-INF/jars/*.jar"
+        }.each { nestedFile ->
+            def outFile = new File(extractedJarsDir, nestedFile.name)
+            outFile.bytes = nestedFile.bytes
+            extractNested(outFile)
         }
     }
 
-    fileTree(dir: extractedJarsDir, include: ["*.jar"]).each { nestedJar ->
-        dependencies.add("modImplementation", files(nestedJar))
+    configurations.nestedMod.files.each { jarFile ->
+        extractNested(jarFile)
     }
 }
+
 
 processResources {
     def props = new Properties()
