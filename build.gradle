@@ -156,7 +156,7 @@ processResources {
     inputs.properties props
 
     filesMatching([
-        "META-INF/fabric.mod.json",
+        "fabric.mod.json",
         "pack.mcmeta",
         "${mod_id}.mixins.json".toString()
     ]) {
@@ -165,18 +165,6 @@ processResources {
 
     exclude "**/*.kra"
 }
-
-loom {
-    runs {
-        client {
-            vmArg "-Dmixin.debug.verify=false"
-        }
-        server {
-            vmArg "-Dmixin.debug.verify=false"
-        }
-    }
-}
-
 
 tasks.withType(JavaCompile).configureEach {
     options.release = java_version_number.toInteger()
