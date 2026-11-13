@@ -10,7 +10,8 @@
     }
   ],
   "result": {
-    "resource": "neepmeat:charnel_pump",
+    "resource": "ae2:item_cell_housing",
+    "data": "{ \"neepmeat:workpiece\": {\"neepmeat:work_piece\": {steps: [{sub: {variant: {item: \"ae2:printed_silicon\"}}, id: \"neepmeat:combine\"}]}}}",
     "amount": 1
   }
 }
